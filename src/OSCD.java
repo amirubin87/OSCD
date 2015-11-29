@@ -167,10 +167,10 @@ public class OSCD {
 	    Map<Integer, Double> sorted_CC = MapUtil.sortByValue(CC);
 	    double maxSeenSoFar=1.0;    
 	    boolean[] isVisited = new boolean[CC.size()+1];
-	    int commID=0;
+	    int commID=0;	    
 	    for (int v : sorted_CC.keySet()){
 	    	if(maxSeenSoFar<CC.get(v)){
-	    		throw(new RuntimeException(String.format("sortedCC was not sorted. node: {0}.", v)));
+	    		throw(new RuntimeException(String.format("sortedCC was not sorted. node: %1$d.", v)));
 	    	}
 	        if (!isVisited[v]){
 	            isVisited[v]= true;
@@ -186,6 +186,7 @@ public class OSCD {
 	            commID+=1;
 	        }
 	    }
+	    
 	    return result;
 	}
 	

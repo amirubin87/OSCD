@@ -8,8 +8,8 @@ public class RunOSCD {
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20");
 		}
 		else{
-			String pathToGraph = "C:/Temp/s-10-om8-2/network.dat";
-			String outputPath = "C:/Temp/s-10-om8-2/JavaSCD";
+			String pathToGraph = "C:/Temp/s-40-om8-2/network.dat";
+			String outputPath = "C:/Temp/s-40-om8-2/JavaSCD";
 			double[] betas = {2.5,1.02};
 			
 			double alpha = 0.8;
