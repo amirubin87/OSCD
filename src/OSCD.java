@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,13 +31,27 @@ public class OSCD {
 		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
 		this.maxIterationsToRun = maxIterationsToRun;
 		this.pathToGraph = pathToGraph;
-		this.g = new UndirectedUnweightedGraph(Paths.get(pathToGraph));
+		this.g = new UndirectedUnweightedGraph(Paths.get(pathToGraph));		
 		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(g);		
 		this.ORIGINALmetaData = new SCDGraphMetaData(g,firstPart);
 		this.metaData = this.ORIGINALmetaData; 
 	}
 	
-	public void FindCommunities() throws FileNotFoundException, UnsupportedEncodingException{
+	public OSCD(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun) throws IOException{
+		this.betas= betas;
+		this.alpha = alpha;
+		this.outputPath =outputPath;
+		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
+		this.maxIterationsToRun = maxIterationsToRun;
+		this.pathToGraph = pathToGraph;
+		this.g = new UndirectedUnweightedGraph(Paths.get(pathToGraph));
+		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);	
+		System.out.println(firstPart.entrySet());
+		this.ORIGINALmetaData = new SCDGraphMetaData(g,firstPart,true);
+		this.metaData = this.ORIGINALmetaData; 
+	}
+	
+	public void FindCommunities() throws IOException{
 		for (double betta : betas){
 			System.out.println("");
 			System.out.println("                       Input: " + pathToGraph);
@@ -49,7 +64,7 @@ public class OSCD {
 		}
 	}
 	
-	private Map<Integer,Set<Integer>> FindCommunities(double betta){
+	private Map<Integer,Set<Integer>> FindCommunities(double betta) {
 	    int isDone = 0;
 	    int amountOfScans = 0;
 	    int n = g.number_of_nodes();
@@ -65,29 +80,20 @@ public class OSCD {
 	            for (Integer neighborComm : neighborComms){
 	                double inc= Calc_WCC(neighborComm, node);
 	                comms_inc.put(neighborComm, inc);
-	            }
+	            }	            
 	            Set<Integer> c_v_new =Keep_Best_Communities(comms_inc, betta);
-	            
+	           
 	            boolean shouldMergeComms = amountOfScans>iteratioNumToStartMerge;
 				Map<Integer[],Double> commsCouplesIntersectionRatio = metaData.SetCommsForNode(node, c_v_new, shouldMergeComms );
 	            boolean haveMergedComms = false;
 	            if(shouldMergeComms){
 	            	haveMergedComms = FindAndMergeComms(commsCouplesIntersectionRatio);
-	            	//System.out.println(haveMergedComms);
 	            }	            
 	            
 	            if (!haveMergedComms && c_v_new.equals(c_v_original)){
 	            	isDone++;
 	            }
-	            else{
-	            	/*System.out.print("zeroNode  ");
-	            	System.out.println(node);
-	            	System.out.print("haveMergedComms  ");
-	            	System.out.println(haveMergedComms);
-	            	System.out.print("c_v_new  ");
-	            	System.out.println(c_v_new);
-	            	System.out.print("c_v_original  ");
-	            	System.out.println(c_v_original);*/
+	            else{	            	
 	                isDone = 0;
 	            }
 	        }
@@ -133,7 +139,7 @@ public class OSCD {
 	    }
 	    Set<Integer> bestComs = new HashSet<Integer>();
 	    for(Entry<Integer, Double> entry: comms_imps.entrySet()){
-	    		 if (entry.getValue()*betta >= bestImp){
+	    		 if (entry.getValue()*betta > bestImp){
 	    				 bestComs.add(entry.getKey());
 	    		 }
 	    }
@@ -163,15 +169,15 @@ public class OSCD {
 
 	public static Map<Integer,Set<Integer>> GetFirstPartition(UndirectedUnweightedGraph G){
 		Map<Integer,Set<Integer>> result = new HashMap<>();
-		Map<Integer, Double> CC = G.Clustring();
+		Map<Integer, Double> CC = G.Clustring();		
 	    Map<Integer, Double> sorted_CC = MapUtil.sortByValue(CC);
 	    double maxSeenSoFar=1.0;    
-	    boolean[] isVisited = new boolean[CC.size()+1];
+	    boolean[] isVisited = new boolean[G.maxNodeId()];	    
 	    int commID=0;	    
 	    for (int v : sorted_CC.keySet()){
 	    	if(maxSeenSoFar<CC.get(v)){
 	    		throw(new RuntimeException(String.format("sortedCC was not sorted. node: %1$d.", v)));
-	    	}
+	    	}	    	
 	        if (!isVisited[v]){
 	            isVisited[v]= true;
 	            Set<Integer> vSet = new HashSet<>();
@@ -191,7 +197,7 @@ public class OSCD {
 	}
 	
 	public double OLD_WCC(int comm, int  node){
-		int n =(int) g.size(); 
+		int n =(int) g.number_of_nodes(); 
 		Set<Integer> commMembers = metaData.com2nodes.get(comm);
 		 long t = calcT(commMembers, node);
 		 double divesor = commMembers.size() + n*((metaData.T.get(node) - t));
@@ -225,7 +231,7 @@ public class OSCD {
 	    }	    
 	    BigDecimal partB = new BigDecimal(VTxV).divide(new BigDecimal(divesor),10, BigDecimal.ROUND_DOWN);	
 	    double ans = (partA.multiply(partB)).doubleValue();
-	    //System.out.println(ans);
+	    
 	    return ans;
 	    
 	}
@@ -248,5 +254,27 @@ public class OSCD {
 	    }
 	    return t;
 	}
+	
+	public Map<Integer,Set<Integer>> GetPartitionFromFile(String partFile) throws IOException{		
+		Map<Integer,Set<Integer>> comm2Nodes= new HashMap<Integer,Set<Integer>>();
+		List<String> lines= Files.readAllLines(Paths.get(partFile));		
+	    int commID=0;
+	    for (String line : lines){
+	        String[] nodes = line.split(" |\t");	        		 
+	    	if (nodes.length >2){
+	    		Set<Integer> comm = new HashSet<>();
+	    		for (String node : nodes){
+	    			comm.add(Integer.parseInt(node.trim()));
+	    		}
+	            comm2Nodes.put(commID, comm);
+	            commID ++;
+	    	}
+	    }
+	    return comm2Nodes;
+	}
 }
+
+
+
+
 

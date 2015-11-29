@@ -13,6 +13,7 @@ public class UndirectedUnweightedGraph {
 	private double number_of_edges;
 	public Map<Integer, Long> T;
 	private Map<Integer, Set<Integer>> VT;
+	private int MaxNodeId=0;
 	
 	public UndirectedUnweightedGraph(Path p) throws IOException{
 		List<String> lines= Files.readAllLines(p);
@@ -22,6 +23,11 @@ public class UndirectedUnweightedGraph {
 			String[] parts = line.split(" |\t");
 			Integer v = Integer.parseInt(parts[0].trim());
 			Integer u = Integer.parseInt(parts[1].trim());
+			int max = Math.max(u, v);
+			if(max>MaxNodeId){
+				MaxNodeId=max;
+			}
+			
 			Set<Integer> vNeig= neighbors.get(v);
 			if(vNeig == null){
 				vNeig = new HashSet<Integer>();
@@ -134,5 +140,9 @@ public class UndirectedUnweightedGraph {
     		}
     	}
 		return T;
+	}
+
+	public int maxNodeId() {		
+		return MaxNodeId;
 	}
 }

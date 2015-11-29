@@ -61,6 +61,57 @@ public class SCDGraphMetaData {
         }
     }
     
+    public SCDGraphMetaData(UndirectedUnweightedGraph graph, Map<Integer,Set<Integer>> comms, boolean partitionIsFromFile){
+    	this(); 
+    	g = graph;
+    	T = graph.Triangles();   
+    	VT = graph.VTriangles(); 
+    	int maxCommIDSeen = 0;
+    	int commID = 0;
+        for (Entry<Integer, Set<Integer>> comm :comms.entrySet()){
+        	commID =comm.getKey();
+        	maxCommIDSeen = Math.max(maxCommIDSeen, commID);
+        	Set<Integer> nodes =comm.getValue();        
+            com2nodes.put(commID,nodes);
+            Intersection_c1_c2.put(commID,new HashMap<>());
+            for (int node : nodes){
+            		Set<Integer> commsNodeIsIn = node2coms.get(node);
+            		if(commsNodeIsIn == null){
+	            		commsNodeIsIn = new HashSet<>();	            		
+		                node2coms.put(node,commsNodeIsIn);
+            		}
+        			commsNodeIsIn.add(commID);            		
+            }
+        }
+        
+        if(partitionIsFromFile){
+        	for( Entry<Integer, Set<Integer>> AcommIdAndNodes: com2nodes.entrySet()){
+        		for( Entry<Integer, Set<Integer>> BcommIdAndNodes: com2nodes.entrySet()){
+        			int AcommId = AcommIdAndNodes.getKey();
+        			int BcommId = BcommIdAndNodes.getKey();
+        			if (AcommId < BcommId){
+        				int intersectionSize = Utills.IntersectionSize(AcommIdAndNodes.getValue(), BcommIdAndNodes.getValue());
+        				Map<Integer, Integer> AcommDictionary = Intersection_c1_c2.get(AcommId);
+        				AcommDictionary.put(BcommId, intersectionSize);
+        			}
+        		}
+        	}
+        	commID = maxCommIDSeen +1;
+        	for(int node : g.nodes()){
+        		Set<Integer> nodesComms = node2coms.get(node);
+        		if(nodesComms == null){
+        			nodesComms = new HashSet<>();
+        			nodesComms.add(commID);
+        			node2coms.put(node,nodesComms);
+        			Set<Integer> nodeInSet = new HashSet<>();
+        			nodeInSet.add(node);
+        			com2nodes.put(commID, nodeInSet);
+        			commID++;
+        		}
+        	}
+        }
+    }
+    
 	public SCDGraphMetaData(SCDGraphMetaData ORIGINALmetaData) {
     	g=ORIGINALmetaData.g;
     	T=Utills.CopyMapIntLong(ORIGINALmetaData.T);
