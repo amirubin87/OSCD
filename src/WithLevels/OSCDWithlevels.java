@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class OSCDWithlevels {
-	UndirectedUnweightedGraph g;
+	public UndirectedGraph g;
 	public double[] betas;
 	public double alpha;
 	public String outputPath;
@@ -23,8 +23,8 @@ public class OSCDWithlevels {
 	public int maxIterationsToRun;
 	public int percentageOfStableNodes;
 	public String pathToGraph;
-	public SCDGraphMetaData ORIGINALmetaData;
-	public SCDGraphMetaData metaData;
+	public SCDWithLevelsGraphMetaData ORIGINALmetaData;
+	public SCDWithLevelsGraphMetaData metaData;
 	
 	public OSCDWithlevels(String pathToGraph, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
 		this.percentageOfStableNodes= percentageOfStableNodes;
@@ -34,9 +34,9 @@ public class OSCDWithlevels {
 		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
 		this.maxIterationsToRun = maxIterationsToRun;
 		this.pathToGraph = pathToGraph;
-		this.g = new UndirectedUnweightedGraph(Paths.get(pathToGraph));		
+		this.g = new UndirectedGraph(Paths.get(pathToGraph));		
 		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(g);		
-		this.ORIGINALmetaData = new SCDGraphMetaData(g,firstPart);
+		this.ORIGINALmetaData = new SCDWithLevelsGraphMetaData(g,firstPart);
 		this.metaData = this.ORIGINALmetaData; 
 	}
 	
@@ -48,10 +48,10 @@ public class OSCDWithlevels {
 		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
 		this.maxIterationsToRun = maxIterationsToRun;
 		this.pathToGraph = pathToGraph;
-		this.g = new UndirectedUnweightedGraph(Paths.get(pathToGraph));
+		this.g = new UndirectedGraph(Paths.get(pathToGraph));
 		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);	
 		System.out.println(firstPart.entrySet());
-		this.ORIGINALmetaData = new SCDGraphMetaData(g,firstPart,true);
+		this.ORIGINALmetaData = new SCDWithLevelsGraphMetaData(g,firstPart,true);
 		this.metaData = this.ORIGINALmetaData; 
 	}
 	
@@ -61,7 +61,7 @@ public class OSCDWithlevels {
 			System.out.println("                       Input: " + pathToGraph);
 			System.out.println("                       betta: " + betta);
 			// Create a copy of the original meta data
-			metaData = new SCDGraphMetaData(ORIGINALmetaData);			
+			metaData = new SCDWithLevelsGraphMetaData(ORIGINALmetaData);			
 			Map<Integer,Set<Integer>> comms = FindCommunities(betta);
 			
 			WriteToFile(comms, betta);
@@ -71,14 +71,14 @@ public class OSCDWithlevels {
 	private Map<Integer,Set<Integer>> FindCommunities(double betta) {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
-	    int n = g.number_of_nodes();
+	    int n = g.GetNumberOfNodes();
 	    int numOfStableNodesToReach = n*percentageOfStableNodes/100;
-	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){
-	    	numOfStableNodes=0;
+	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){	    	
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);
 	    	System.out.println(numOfStableNodes);
+	    	numOfStableNodes=0;
 	        amountOfScans++;
-	        for (Integer node : g.nodes()){
+	        for (Integer node : g.GetNodes()){
 	            Set<Integer> c_v_original = metaData.node2coms.get(node);	            
 	            metaData.ClearCommsOfNode(node);
 	            Map<Integer, Double> comms_inc = new HashMap<Integer, Double>();
@@ -170,12 +170,12 @@ public class OSCDWithlevels {
 		writer.close();	
 	}
 
-	public static Map<Integer,Set<Integer>> GetFirstPartition(UndirectedUnweightedGraph G){
+	public static Map<Integer,Set<Integer>> GetFirstPartition(UndirectedGraph G){
 		Map<Integer,Set<Integer>> result = new HashMap<>();
 		Map<Integer, Double> CC = G.Clustring();		
 	    Map<Integer, Double> sorted_CC = MapUtil.sortByValue(CC);
 	    double maxSeenSoFar=1.0;    
-	    boolean[] isVisited = new boolean[G.maxNodeId()+1];	    
+	    boolean[] isVisited = new boolean[G.GetMaxNodeId()+1];	    
 	    int commID=0;	    
 	    for (int v : sorted_CC.keySet()){
 	    	if(maxSeenSoFar<CC.get(v)){
@@ -200,9 +200,9 @@ public class OSCDWithlevels {
 	}
 	
 	public double OLD_WCC(int comm, int  node){
-		int n =(int) g.number_of_nodes(); 
+		int n =(int) g.GetNumberOfNodes(); 
 		Set<Integer> commMembers = metaData.com2nodes.get(comm);
-		 long t = calcT(commMembers, node);
+		 double t = calcT(commMembers, node);
 		 double divesor = commMembers.size() + n*((metaData.T.get(node) - t));
 		 if (divesor==0)
 		        return 0;
@@ -212,23 +212,23 @@ public class OSCDWithlevels {
 				   
 	public double Calc_WCC(int comm, int  x){	    
 		Set<Integer> commMembers = metaData.com2nodes.get(comm);
-		long TxV = metaData.T.get(x);	    
+		double TxV = metaData.T.get(x);	    
 	    if (TxV==0){
 	        return 0;
 	    }
 	    
-		long TxC = calcT(commMembers, x);	    
+		double TxC = calcT(commMembers, x);	    
 		if(TxC == 0){
 			return 0;
 		}
 		BigDecimal partA = new BigDecimal(TxC).divide(new BigDecimal(TxV),10, BigDecimal.ROUND_DOWN); 
 	    
-	    int VTxV = metaData.VT.get(x).size();
+	    double VTxV = metaData.VTWeight.get(x);
 	    if(VTxV == 0){
 			return 0;
 		}
-	    int VTxVnoC = calcVTWithoutComm(commMembers, x);	    
-	    double divesor = (double)(commMembers.size() +(VTxVnoC));	    
+	    double VTxVnoC = calcVTWithoutComm(commMembers, x);	    
+	    double divesor = (double)(commMembers.size()*g.GetAverageWeight() +(VTxVnoC));	    
 	    if (divesor==0){
 	        return 0;
 	    }	    
@@ -239,20 +239,32 @@ public class OSCDWithlevels {
 	    
 	}
 
-	private int calcVTWithoutComm(Set<Integer> commMembers, int node) {		
+	private double calcVTWithoutComm(Set<Integer> commMembers, int node) {		
 		Set<Integer> nodesWithTriangle = metaData.VT.get(node);
-		return nodesWithTriangle.size() - Utills.IntersectionSize(nodesWithTriangle, commMembers);
+		double weightsOfEdgesToNodesWithTriangle = metaData.VTWeight.get(node);
+		double weightsOfEdgesToCommMembersWithTriangles = SumWeightsFromNodeToNodes(node, Utills.Intersection(nodesWithTriangle, commMembers));		
+		return weightsOfEdgesToNodesWithTriangle - weightsOfEdgesToCommMembersWithTriangles;
 	}
 
-	private long calcT(Set<Integer> commMembers, int node) {
-		long t=0;
+	private double SumWeightsFromNodeToNodes(int node, Set<Integer> nodes) {
+		double ans = 0;
+		for (int v : nodes){
+			ans = ans + g.EdgeWeight(node, v);
+		}
+		return ans;
+	}
+
+	private double calcT(Set<Integer> commMembers, int node) {
+		double t=0;
 	    Set<Integer> neighbours = g.neighbors(node);
 	    Set<Integer> neighInComm = Utills.Intersection(commMembers, neighbours);
 	    for (int v : neighInComm){
-	        for (int u : neighInComm){
-	            if (u > v && g.get_edge_weight(u,v)>0){
-	                t++;
-	            }
+	    	double weightV =g.EdgeWeight(node,v);
+	        for (int u : neighInComm){	
+	        	double weightUV = g.EdgeWeight(u,v);
+	            if (u > v){
+	                t = t + Math.min(g.EdgeWeight(u,node), Math.min(weightV,weightUV ));
+	                }
 	        }
 	    }
 	    return t;

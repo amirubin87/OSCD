@@ -5,13 +5,13 @@ public class RunOSCDWithLevels {
 
 	public static void main(String[] args) throws IOException {		
 		
-		if (args.length <3){
+		if (false && args.length <3){
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
-			String pathToGraph = "C:/Temp/amazon/com-amazon.ungraph.txt";
-			String outputPath = "C:/Temp/amazon/JavaSCD";
-			double[] betas = {1.18,1.22};
+			String pathToGraph = "C:/Temp/s-10-om8-2/network.dat";
+			String outputPath = "C:/Temp/s-10-om8-2/JavaSCDWeights";
+			double[] betas = {1.1,1.8,2.5};
 			
 			double alpha = 0.8;
 			int iteratioNumToStartMerge = 100;
