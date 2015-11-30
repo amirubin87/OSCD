@@ -20,11 +20,13 @@ public class OSCD {
 	public String outputPath;
 	public int iteratioNumToStartMerge;
 	public int maxIterationsToRun;
+	public int percentageOfStableNodes;
 	public String pathToGraph;
 	public SCDGraphMetaData ORIGINALmetaData;
 	public SCDGraphMetaData metaData;
 	
-	public OSCD(String pathToGraph, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun) throws IOException{
+	public OSCD(String pathToGraph, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
+		this.percentageOfStableNodes= percentageOfStableNodes;
 		this.betas= betas;
 		this.alpha = alpha;
 		this.outputPath =outputPath;
@@ -37,7 +39,8 @@ public class OSCD {
 		this.metaData = this.ORIGINALmetaData; 
 	}
 	
-	public OSCD(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun) throws IOException{
+	public OSCD(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
+		this.percentageOfStableNodes= percentageOfStableNodes;
 		this.betas= betas;
 		this.alpha = alpha;
 		this.outputPath =outputPath;
@@ -65,12 +68,14 @@ public class OSCD {
 	}
 	
 	private Map<Integer,Set<Integer>> FindCommunities(double betta) {
-	    int isDone = 0;
+	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.number_of_nodes();
-	    while (isDone < n && amountOfScans < maxIterationsToRun){
+	    int numOfStableNodesToReach = (int)((double)n*percentageOfStableNodes/(double)100);
+	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){
+	    	numOfStableNodes=0;
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);
-	    	System.out.println(isDone);
+	    	System.out.println(numOfStableNodes);
 	        amountOfScans++;
 	        for (Integer node : g.nodes()){
 	            Set<Integer> c_v_original = metaData.node2coms.get(node);	            
@@ -91,10 +96,7 @@ public class OSCD {
 	            }	            
 	            
 	            if (!haveMergedComms && c_v_new.equals(c_v_original)){
-	            	isDone++;
-	            }
-	            else{	            	
-	                isDone = 0;
+	            	numOfStableNodes++;
 	            }
 	        }
         }    

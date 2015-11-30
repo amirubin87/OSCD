@@ -72,7 +72,7 @@ public class OSCDWithlevels {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.number_of_nodes();
-	    int numOfStableNodesToReach = n/100*percentageOfStableNodes;
+	    int numOfStableNodesToReach = n*percentageOfStableNodes/100;
 	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){
 	    	numOfStableNodes=0;
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);

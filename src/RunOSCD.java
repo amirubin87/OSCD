@@ -3,9 +3,8 @@ import java.io.IOException;
 public class RunOSCD {
 
 	public static void main(String[] args) throws IOException {		
-		
 		if (args.length <3){
-			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20");
+			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
 			String pathToGraph = "C:/Temp/amazon/com-amazon.ungraph.txt";
@@ -15,6 +14,7 @@ public class RunOSCD {
 			double alpha = 0.8;
 			int iteratioNumToStartMerge = 100;
 			int maxIterationsToRun = 30;
+			int percentageOfStableNodes = 95;
 			String partitionFile = "";
 			boolean partitionIsFromFile = false;
 			
@@ -37,7 +37,14 @@ public class RunOSCD {
 				maxIterationsToRun = Integer.parseInt(args[5]);
 			
 			if(args.length > 6){
-				partitionFile = args[6];
+				percentageOfStableNodes = Integer.parseInt(args[6]);
+				if(percentageOfStableNodes<1 || percentageOfStableNodes>100){
+					throw(new RuntimeException("param at location 6 is percentageOfStableNodes. You gave: " + percentageOfStableNodes +"  which is not <1 or >100."));
+				}
+			}
+			
+			if(args.length > 7){
+				partitionFile = args[7];
 				partitionIsFromFile = true;
 			}
 			
@@ -52,17 +59,18 @@ public class RunOSCD {
 			System.out.println("alpha:                   "+alpha);
 			System.out.println("iteratioNumToStartMerge: "+iteratioNumToStartMerge);
 			System.out.println("maxIterationsToRun:      "+maxIterationsToRun);
+			System.out.println("percentageOfStableNodes: "+percentageOfStableNodes);
 			if(partitionIsFromFile){
-				System.out.println("partitionFile:      "+ partitionFile);
+				System.out.println("partitionFile:           "+ partitionFile);
 			}
 			System.out.println("");
 			
 			OSCD oscd = null;
 			if (partitionIsFromFile){
-				oscd = new OSCD(pathToGraph, partitionFile, betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun);
+				oscd = new OSCD(pathToGraph, partitionFile, betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun, percentageOfStableNodes);
 			}
 			else{
-				oscd = new OSCD(pathToGraph,betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun);
+				oscd = new OSCD(pathToGraph,betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun,percentageOfStableNodes);
 			}
 			oscd.FindCommunities();
 		}
