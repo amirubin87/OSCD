@@ -172,7 +172,7 @@ public class OSCD {
 		Map<Integer, Double> CC = G.Clustring();		
 	    Map<Integer, Double> sorted_CC = MapUtil.sortByValue(CC);
 	    double maxSeenSoFar=1.0;    
-	    boolean[] isVisited = new boolean[G.maxNodeId()];	    
+	    boolean[] isVisited = new boolean[G.maxNodeId()+1];	    
 	    int commID=0;	    
 	    for (int v : sorted_CC.keySet()){
 	    	if(maxSeenSoFar<CC.get(v)){
