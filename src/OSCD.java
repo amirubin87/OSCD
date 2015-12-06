@@ -71,12 +71,12 @@ public class OSCD {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.number_of_nodes();
-	    int numOfStableNodesToReach = (int)((double)n*percentageOfStableNodes/(double)100);
-	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){
-	    	numOfStableNodes=0;
+	    int numOfStableNodesToReach = n*percentageOfStableNodes/100;
+	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){	    	
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);
 	    	System.out.println(numOfStableNodes);
-	        amountOfScans++;
+	    	numOfStableNodes=0;
+	    	amountOfScans++;
 	        for (Integer node : g.nodes()){
 	            Set<Integer> c_v_original = metaData.node2coms.get(node);	            
 	            metaData.ClearCommsOfNode(node);
