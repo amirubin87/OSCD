@@ -12,9 +12,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.text.html.parser.Entity;
+
 import java.util.Map.Entry;
 
 public class OSCDWithlevels {
+	public List<UndirectedGraph> ORIGINALg;
 	public UndirectedGraph g;
 	public double[] betas;
 	public double alpha;
@@ -23,7 +27,7 @@ public class OSCDWithlevels {
 	public int maxIterationsToRun;
 	public int percentageOfStableNodes;
 	public String pathToGraph;
-	public SCDWithLevelsGraphMetaData ORIGINALmetaData;
+	public List<SCDWithLevelsGraphMetaData> ORIGINALmetaData;
 	public SCDWithLevelsGraphMetaData metaData;
 	
 	public OSCDWithlevels(String pathToGraph, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
@@ -36,8 +40,9 @@ public class OSCDWithlevels {
 		this.pathToGraph = pathToGraph;
 		this.g = new UndirectedGraph(Paths.get(pathToGraph));		
 		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(g);		
-		this.ORIGINALmetaData = new SCDWithLevelsGraphMetaData(g,firstPart);
-		this.metaData = this.ORIGINALmetaData; 
+		this.ORIGINALmetaData = new ArrayList<>();
+		ORIGINALmetaData.add(new SCDWithLevelsGraphMetaData(g,firstPart));
+		this.metaData = this.ORIGINALmetaData.get(0); 
 	}
 	
 	public OSCDWithlevels(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
@@ -51,8 +56,9 @@ public class OSCDWithlevels {
 		this.g = new UndirectedGraph(Paths.get(pathToGraph));
 		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);	
 		System.out.println(firstPart.entrySet());
-		this.ORIGINALmetaData = new SCDWithLevelsGraphMetaData(g,firstPart,true);
-		this.metaData = this.ORIGINALmetaData; 
+		this.ORIGINALmetaData = new ArrayList<>();
+		ORIGINALmetaData.add(new SCDWithLevelsGraphMetaData(g,firstPart,true));
+		this.metaData = this.ORIGINALmetaData.get(0); 
 	}
 	
 	public void FindCommunities() throws IOException{
@@ -61,14 +67,15 @@ public class OSCDWithlevels {
 			System.out.println("                       Input: " + pathToGraph);
 			System.out.println("                       betta: " + betta);
 			// Create a copy of the original meta data
-			metaData = new SCDWithLevelsGraphMetaData(ORIGINALmetaData);			
-			Map<Integer,Set<Integer>> comms = FindCommunities(betta);
+			metaData = new SCDWithLevelsGraphMetaData(ORIGINALmetaData.get(0));
+			g= ORIGINALg.get(0);
+			Map<Integer,Set<Integer>> comms = FindCommunities(betta,0);
 			
 			WriteToFile(comms, betta);
 		}
 	}
 	
-	private Map<Integer,Set<Integer>> FindCommunities(double betta) {
+	private Map<Integer,Set<Integer>> FindCommunities(double betta, int level) {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.GetNumberOfNodes();
@@ -286,6 +293,52 @@ public class OSCDWithlevels {
 	    	}
 	    }
 	    return comm2Nodes;
+	}
+	
+	public void CreateNextLevel(int level){
+		UndirectedGraph nextLevelGraph = new UndirectedGraph();
+		for(Entry<Integer, Set<Integer>> comIdNodes: metaData.com2nodes.entrySet()){
+			int commId = comIdNodes.getKey();			
+			Map<Integer, Double> edgesToadd = FindNeighborCommsAndEdgesWeight(commId, comIdNodes.getValue());
+			nextLevelGraph.AddEdges(commId, edgesToadd);
+		}
+		nextLevelGraph.CalcGraphMetrics();
+
+		ORIGINALg.add(nextLevelGraph);
+		g= nextLevelGraph;
+		SCDWithLevelsGraphMetaData nextLevelMetaData = new SCDWithLevelsGraphMetaData(g);
+		ORIGINALmetaData.add(nextLevelMetaData);
+		metaData = nextLevelMetaData;
+		
+	}
+
+	// All will be SMALLER than commID
+	private Map<Integer,Double> FindNeighborCommsAndEdgesWeight(int commId ,Set<Integer> nodesInComm) {
+		// go over nodes in coom. find their neigh. Each neighbor- find the comms he is in. If the comm is lower than commId, add to its weight in the map.
+		Map<Integer,Double> ans = new HashMap<>();
+		Set<Integer> neighbors ;		
+		Set<Integer> neighborComms ;
+		for (int node :nodesInComm){
+			neighbors = g.neighbors(node);
+			for( int neighbor :neighbors){
+				neighborComms = metaData.node2coms.get(neighbor);
+				for(Integer neighborComm : neighborComms){
+					if(neighborComm < commId){
+						double w = g.EdgeWeight(node, neighbor);
+						Integer weightUntilNow =ans.get(neighborComm);
+						if( weightUntilNow == null){
+							ans.put(neighborComm, w);
+						}
+						else{
+							ans.put(neighborComm, weightUntilNow + w);
+						}
+					}
+				}
+			}
+		}
+		
+		
+		return ans;
 	}
 }
 

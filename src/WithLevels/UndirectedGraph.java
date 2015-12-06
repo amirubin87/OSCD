@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 
@@ -22,6 +23,18 @@ public class UndirectedGraph {
 	private Map<Integer, Double> VTWeights;
 	
 	// CONS
+	public UndirectedGraph(){
+		nodes = new HashSet<>();
+		neighbors = new HashMap<>();
+		weight_of_edges = 0.0;
+		num_of_edges = 0;
+		T = new HashMap<>();
+		EdgesWeights = new HashMap<>();
+		VT = new HashMap<>();
+		MaxNodeId=0;
+		degrees = new HashMap<>();
+		VTWeights = new HashMap<>();
+	}
 	
 	public UndirectedGraph(Path p) throws IOException{
 		degrees = new HashMap<>();
@@ -228,6 +241,44 @@ private double TriangleWeight(int v, int u, int w) {
 	public double GetAverageWeight() {
 		return weight_of_edges/num_of_edges;
 	}
+
+	private void AddNode(int nodeId) {
+		if(!nodes.contains(nodeId)){
+			nodes.add(nodeId);
+			if(MaxNodeId < nodeId ){
+				MaxNodeId = nodeId;
+			}
+			neighbors.put(nodeId, new HashSet<>());
+			EdgesWeights.put(nodeId, new HashMap<>());
+			degrees.put(nodeId, (double) 0);
+		}
+	}
+
+	public void AddEdges(int commId, Map<Integer, Double> edgesToadd) {
+		AddNode(commId);
+		for(Entry<Integer, Double> neighWeight : edgesToadd.entrySet()){
+			Integer neighbor= neighWeight.getKey();
+			AddNode(neighbor);
+			double weight= neighWeight.getValue();
+			weight_of_edges= weight_of_edges+weight;
+			num_of_edges++;
+			neighbors.get(commId).add(neighbor);
+			neighbors.get(neighbor).add(commId);
+			EdgesWeights.get(neighbor).put(commId, weight);
+			degrees.put(commId, degrees.get(commId)+weight);
+			degrees.put(neighbor, degrees.get(neighbor)+weight);
+			
+		}
+			
+	}
+
+	public void CalcGraphMetrics() {
+		T;
+		VT;
+		VTWeights;
+		
+	}
+
 	
 }
 
