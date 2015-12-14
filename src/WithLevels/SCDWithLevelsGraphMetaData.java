@@ -16,11 +16,11 @@ public class SCDWithLevelsGraphMetaData {
     public Map<Integer, Set<Integer>> node2coms;
     
     //cons
-    public SCDWithLevelsGraphMetaData(){
-    	Intersection_c1_c2 = new HashMap<Integer, Map<Integer, Integer>>();
+    public SCDWithLevelsGraphMetaData(){    	
     	T = new HashMap<Integer, Double>();
     	VT = new HashMap<Integer, Set<Integer>>();
     	VTWeight = new HashMap<Integer, Double>();
+    	Intersection_c1_c2 = new HashMap<Integer, Map<Integer, Integer>>();
     	com2nodes = new HashMap<Integer, Set<Integer>>();
     	node2coms = new HashMap<Integer, Set<Integer>>();
     }

@@ -18,18 +18,30 @@ import javax.swing.text.html.parser.Entity;
 import java.util.Map.Entry;
 
 public class OSCDWithlevels {
-	public List<UndirectedGraph> ORIGINALg;
+	/***************************    Fields  ************************************/
+	// DS
+	public List<UndirectedGraph> LevelsGraphs;
+	public UndirectedGraph OriginalG;
 	public UndirectedGraph g;
+	
+	public List<SCDWithLevelsGraphMetaData> LevelsMetaData;
+	public SCDWithLevelsGraphMetaData OriginalMetaData;
+	public SCDWithLevelsGraphMetaData metaData;
+	
+	// params
 	public double[] betas;
 	public double alpha;
 	public String outputPath;
 	public int iteratioNumToStartMerge;
 	public int maxIterationsToRun;
 	public int percentageOfStableNodes;
-	public String pathToGraph;
-	public List<SCDWithLevelsGraphMetaData> ORIGINALmetaData;
-	public SCDWithLevelsGraphMetaData metaData;
+	public String pathToGraph;	
 	
+	// results
+	public List<Map<Integer,Set<Integer>>> Dendogram;
+	
+	/***************************    CONS ************************************/
+	 
 	public OSCDWithlevels(String pathToGraph, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
 		this.percentageOfStableNodes= percentageOfStableNodes;
 		this.betas= betas;
@@ -38,11 +50,11 @@ public class OSCDWithlevels {
 		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
 		this.maxIterationsToRun = maxIterationsToRun;
 		this.pathToGraph = pathToGraph;
-		this.g = new UndirectedGraph(Paths.get(pathToGraph));		
-		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(g);		
-		this.ORIGINALmetaData = new ArrayList<>();
-		ORIGINALmetaData.add(new SCDWithLevelsGraphMetaData(g,firstPart));
-		this.metaData = this.ORIGINALmetaData.get(0); 
+		
+		this.OriginalG = new UndirectedGraph(Paths.get(pathToGraph));		
+		
+		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(OriginalG);		
+		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart);
 	}
 	
 	public OSCDWithlevels(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
@@ -53,28 +65,84 @@ public class OSCDWithlevels {
 		this.iteratioNumToStartMerge = iteratioNumToStartMerge;
 		this.maxIterationsToRun = maxIterationsToRun;
 		this.pathToGraph = pathToGraph;
-		this.g = new UndirectedGraph(Paths.get(pathToGraph));
-		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);	
-		System.out.println(firstPart.entrySet());
-		this.ORIGINALmetaData = new ArrayList<>();
-		ORIGINALmetaData.add(new SCDWithLevelsGraphMetaData(g,firstPart,true));
-		this.metaData = this.ORIGINALmetaData.get(0); 
+		
+		this.OriginalG = new UndirectedGraph(Paths.get(pathToGraph));
+		
+		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);		
+		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart);
 	}
 	
+	
+	
+	/***************************    find comms  ************************************/
+	
 	public void FindCommunities() throws IOException{
+		this.Dendogram = new ArrayList<>();
 		for (double betta : betas){
 			System.out.println("");
 			System.out.println("                       Input: " + pathToGraph);
 			System.out.println("                       betta: " + betta);
 			// Create a copy of the original meta data
-			metaData = new SCDWithLevelsGraphMetaData(ORIGINALmetaData.get(0));
-			g= ORIGINALg.get(0);
-			Map<Integer,Set<Integer>> comms = FindCommunities(betta,0);
-			
-			WriteToFile(comms, betta);
+			this.LevelsMetaData = new ArrayList<>();		
+			LevelsMetaData.add(new SCDWithLevelsGraphMetaData(OriginalMetaData));
+			this.LevelsGraphs = new ArrayList<>();
+			LevelsGraphs.add(OriginalG);
+			int level = 0;
+			// We break when no comms are found, like done in OSLOM
+			while(true){
+				metaData = new SCDWithLevelsGraphMetaData(LevelsMetaData.get(level));
+				g= LevelsGraphs.get(level);
+				Map<Integer,Set<Integer>> levelComms = FindCommunities(betta,level);
+				//we stop once we have less than 100 communities
+				int nonEmpty = CountNonEmpty(levelComms);
+				if(nonEmpty <100){
+					break;
+				}
+				//Store in dendogram
+				AddToDendogram(level,levelComms);
+				// output level				
+				WriteToFile(Dendogram.get(level), betta, level);
+				//Create next level graph and meta data
+				CreateNextLevel();
+				level++;
+			}
 		}
-	}
+	}	
 	
+
+	private int CountNonEmpty(Map<Integer, Set<Integer>> levelComms) {
+		int ans= 0;
+		for(  Set<Integer> comm : levelComms.values()){
+			if(comm.size()>0)
+				ans++;
+		}
+		return ans;
+	}
+
+	// In every level all nodes will appear!
+	public void AddToDendogram(int level, Map<Integer, Set<Integer>> levelComms) {
+		if (level ==0){
+			Dendogram.add(level, levelComms);
+			return;
+		}
+		Map<Integer, Set<Integer>> currentLevel = new HashMap<>();
+		Map<Integer, Set<Integer>> lowerLevel = Dendogram.get(level-1);
+		
+		for( Entry<Integer, Set<Integer>> topLevelComm: levelComms.entrySet()){
+			int commID = topLevelComm.getKey();
+
+			Set<Integer> nodes = new HashSet<>();
+			Set<Integer> topLevelNodes = topLevelComm.getValue();
+
+			for(int node:topLevelNodes ){
+
+				nodes.addAll(lowerLevel.get(node));
+			}
+			currentLevel.put(commID, nodes);
+		}		
+		Dendogram.add(level, currentLevel);
+	}
+
 	private Map<Integer,Set<Integer>> FindCommunities(double betta, int level) {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
@@ -101,7 +169,7 @@ public class OSCDWithlevels {
 	            boolean haveMergedComms = false;
 	            if(shouldMergeComms){
 	            	haveMergedComms = FindAndMergeComms(commsCouplesIntersectionRatio);
-	            }	            
+	            }            
 	            
 	            if (!haveMergedComms && c_v_new.equals(c_v_original)){
 	            	numOfStableNodes++;
@@ -113,7 +181,7 @@ public class OSCDWithlevels {
 	    }
 	    return metaData.com2nodes;
 	}	  
-	
+		
 	private boolean FindAndMergeComms (Map<Integer[],Double> commsCouplesIntersectionRatio){
 	    boolean haveMergedComms = false;
 	    //Set<Integer> commsToClean = new HashSet<Integer>();
@@ -164,8 +232,8 @@ public class OSCDWithlevels {
     return neighborComms;
     }
 	
-	private void WriteToFile(Map<Integer, Set<Integer>> comms, double betta) throws FileNotFoundException, UnsupportedEncodingException {
-		PrintWriter writer = new PrintWriter(outputPath + betta + ".txt", "UTF-8");
+	private void WriteToFile(Map<Integer, Set<Integer>> comms, double betta, int level) throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(outputPath + betta + "-L-"+ level + ".txt", "UTF-8");
 		for ( Set<Integer> listOfNodes : comms.values()){
 			if(listOfNodes.size()>0){
 				for(int node : listOfNodes){
@@ -215,7 +283,6 @@ public class OSCDWithlevels {
 		        return 0;
 		 return (double)n*t/(double)divesor;
 	}
-				   
 				   
 	public double Calc_WCC(int comm, int  x){	    
 		Set<Integer> commMembers = metaData.com2nodes.get(comm);
@@ -295,26 +362,31 @@ public class OSCDWithlevels {
 	    return comm2Nodes;
 	}
 	
-	public void CreateNextLevel(int level){
+	private void CreateNextLevel(){
+		
+
 		UndirectedGraph nextLevelGraph = new UndirectedGraph();
 		for(Entry<Integer, Set<Integer>> comIdNodes: metaData.com2nodes.entrySet()){
-			int commId = comIdNodes.getKey();			
+			if(comIdNodes.getValue().size()==0){
+				continue;
+			}
+			int commId = comIdNodes.getKey();
+
 			Map<Integer, Double> edgesToadd = FindNeighborCommsAndEdgesWeight(commId, comIdNodes.getValue());
+
 			nextLevelGraph.AddEdges(commId, edgesToadd);
 		}
 		nextLevelGraph.CalcGraphMetrics();
 
-		ORIGINALg.add(nextLevelGraph);
-		g= nextLevelGraph;
-		SCDWithLevelsGraphMetaData nextLevelMetaData = new SCDWithLevelsGraphMetaData(g);
-		ORIGINALmetaData.add(nextLevelMetaData);
-		metaData = nextLevelMetaData;
-		
+		LevelsGraphs.add(nextLevelGraph);		
+		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(nextLevelGraph);	
+		SCDWithLevelsGraphMetaData nextLevelMetaData = new SCDWithLevelsGraphMetaData(nextLevelGraph, firstPart);
+		LevelsMetaData.add(nextLevelMetaData);				
 	}
 
-	// All will be SMALLER than commID
+	// All will be SMALLER than commID	
 	private Map<Integer,Double> FindNeighborCommsAndEdgesWeight(int commId ,Set<Integer> nodesInComm) {
-		// go over nodes in coom. find their neigh. Each neighbor- find the comms he is in. If the comm is lower than commId, add to its weight in the map.
+		// go over nodes in comm. find their neigh. Each neighbor- find the comms he is in. If the comm is lower than commId, add to its weight in the map.
 		Map<Integer,Double> ans = new HashMap<>();
 		Set<Integer> neighbors ;		
 		Set<Integer> neighborComms ;
@@ -325,7 +397,7 @@ public class OSCDWithlevels {
 				for(Integer neighborComm : neighborComms){
 					if(neighborComm < commId){
 						double w = g.EdgeWeight(node, neighbor);
-						Integer weightUntilNow =ans.get(neighborComm);
+						Double weightUntilNow =ans.get(neighborComm);
 						if( weightUntilNow == null){
 							ans.put(neighborComm, w);
 						}

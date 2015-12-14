@@ -192,7 +192,7 @@ public class UndirectedGraph {
 	
 }
 
-private double TriangleWeight(int v, int u, int w) {
+   private double TriangleWeight(int v, int u, int w) {
 		return Math.min(EdgeWeight(v, u), Math.min(EdgeWeight(v, w), EdgeWeight(u, w)));
 	}
 
@@ -264,19 +264,16 @@ private double TriangleWeight(int v, int u, int w) {
 			num_of_edges++;
 			neighbors.get(commId).add(neighbor);
 			neighbors.get(neighbor).add(commId);
-			EdgesWeights.get(neighbor).put(commId, weight);
-			degrees.put(commId, degrees.get(commId)+weight);
-			degrees.put(neighbor, degrees.get(neighbor)+weight);
+			int min = Math.min(neighbor,commId);
+			int max = Math.max(neighbor,commId);
+			AddEdge(min, max, weight);
 			
 		}
 			
 	}
 
 	public void CalcGraphMetrics() {
-		T;
-		VT;
-		VTWeights;
-		
+		CalcTrianglesAndVT();		
 	}
 
 	

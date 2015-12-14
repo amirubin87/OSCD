@@ -1,5 +1,9 @@
 package WithLevels;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class RunOSCDWithLevels {
 
@@ -9,14 +13,14 @@ public class RunOSCDWithLevels {
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
-			String pathToGraph = "C:/Temp/s-10-om8-2/network.dat";
-			String outputPath = "C:/Temp/s-10-om8-2/JavaSCDWeights";
-			double[] betas = {1.1,1.8,2.5};
+			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/com-amazon.ungraph.txt";
+			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDLevels/";
+			double[] betas = {1.1,1.2,1.3,1.4,1.5,2.0,2.5,3.0,3.5,4.0,4.5};
 			
 			double alpha = 0.8;
-			int iteratioNumToStartMerge = 100;
+			int iteratioNumToStartMerge = 6;
 			int maxIterationsToRun = 30;
-			int percentageOfStableNodes = 95;
+			int percentageOfStableNodes = 100;
 			String partitionFile = "";
 			boolean partitionIsFromFile = false;
 			
@@ -75,6 +79,12 @@ public class RunOSCDWithLevels {
 				oscd = new OSCDWithlevels(pathToGraph,betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun,percentageOfStableNodes);
 			}
 			oscd.FindCommunities();
+			
+
+			
+			System.out.println(oscd.Dendogram.toString());
+			
+			
 		}
 	}
 
