@@ -14,13 +14,17 @@ public class RunOSCDWithLevels {
 		}
 		else{
 			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/com-amazon.ungraph.txt";
-			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDLevels/";
-			double[] betas = {1.1,1.2,1.3,1.4,1.5,2.0,2.5,3.0,3.5,4.0,4.5};
+			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDLevelsClique/t";
+			//String pathToGraph = "C:/Temp/network.txt";
+			//String outputPath = "C:/Temp/SCDClique/";
+			
+			
+			double[] betas = {1.1};//1.02,1.01,1.1,1.2,1.3,1.4,1.5,2.0,2.5,3.0,3.5,4.0,4.5}; 
 			
 			double alpha = 0.8;
-			int iteratioNumToStartMerge = 6;
+			int iteratioNumToStartMerge = 4;
 			int maxIterationsToRun = 30;
-			int percentageOfStableNodes = 100;
+			int percentageOfStableNodes = 99;
 			String partitionFile = "";
 			boolean partitionIsFromFile = false;
 			
@@ -79,12 +83,6 @@ public class RunOSCDWithLevels {
 				oscd = new OSCDWithlevels(pathToGraph,betas,alpha,outputPath, iteratioNumToStartMerge, maxIterationsToRun,percentageOfStableNodes);
 			}
 			oscd.FindCommunities();
-			
-
-			
-			System.out.println(oscd.Dendogram.toString());
-			
-			
 		}
 	}
 

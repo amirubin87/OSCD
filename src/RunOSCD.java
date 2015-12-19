@@ -3,18 +3,18 @@ import java.io.IOException;
 public class RunOSCD {
 
 	public static void main(String[] args) throws IOException {		
-		if (args.length <3){
+		if (false && args.length <3){
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
-			String pathToGraph = "C:/Temp/amazon/com-amazon.ungraph.txt";
-			String outputPath = "C:/Temp/amazon/JavaSCD";
-			double[] betas = {1.18,1.22};
+			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/SLIM-com-amazon.ungraph.txt";
+			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDNoLevels/SLIM-";
+			double[] betas = {1.1,1.2,1.3,1.4,1.5,2.0,2.5,3.0,3.5,4.0,4.5};
 			
 			double alpha = 0.8;
-			int iteratioNumToStartMerge = 100;
+			int iteratioNumToStartMerge = 6;
 			int maxIterationsToRun = 30;
-			int percentageOfStableNodes = 95;
+			int percentageOfStableNodes = 100;
 			String partitionFile = "";
 			boolean partitionIsFromFile = false;
 			

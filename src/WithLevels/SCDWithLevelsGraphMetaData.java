@@ -47,7 +47,7 @@ public class SCDWithLevelsGraphMetaData {
 
     }
 
-    public SCDWithLevelsGraphMetaData(UndirectedGraph graph, Map<Integer,Set<Integer>> comms){
+    public SCDWithLevelsGraphMetaData(UndirectedGraph graph, Map<Integer,Set<Integer>> comms, boolean commsMayOverlap){
     	this(); 
     	g = graph;
     	T = graph.GetTriangles();   
@@ -55,18 +55,43 @@ public class SCDWithLevelsGraphMetaData {
     	VTWeight = graph.GetVTrianglesWeights();
         for (Entry<Integer, Set<Integer>> comm :comms.entrySet()){
         	int commID =comm.getKey();
+		
+        	Set<Integer> neighbourComms = new HashSet<>();
         	Set<Integer> nodes =comm.getValue();        
             com2nodes.put(commID,nodes);
-            Intersection_c1_c2.put(commID,new HashMap<>());
+            Intersection_c1_c2.put(commID,new HashMap<>());            
             for (int node : nodes){
-            		Set<Integer> commInSet = new HashSet<>();
-            		commInSet.add(commID);
-	                node2coms.put(node,commInSet);
+            		Set<Integer> commsOfNode = node2coms.get(node);            		
+            		if(commsOfNode == null){
+            			commsOfNode = new HashSet<>();
+            			node2coms.put(node,commsOfNode);
+            		}
+            		else{
+            			neighbourComms.addAll(commsOfNode);
+            		}
+            		commsOfNode.add(commID);
             }
+    		// Takes cares of intersection
+    		if(commsMayOverlap){    			
+    			for(int otherComm: neighbourComms){
+    				if(commID!=otherComm){    					
+	    				int intersection = Utills.IntersectionSize(nodes, com2nodes.get(otherComm));
+	    				// this can be refactored a bit..
+	    				int min = Math.min(commID, otherComm);
+	    				int max = Math.max(commID, otherComm);
+    					Map<Integer,Integer> toPut = Intersection_c1_c2.get(min);
+    					if(toPut == null){
+    						toPut =new HashMap<>();
+    						Intersection_c1_c2.put(min, toPut);
+    					}
+    					toPut.put(max, intersection);
+    				}
+    			}
+    		}            
         }
     }
     
-    public SCDWithLevelsGraphMetaData(UndirectedGraph graph, Map<Integer,Set<Integer>> comms, boolean partitionIsFromFile){
+    /*public SCDWithLevelsGraphMetaData(UndirectedGraph graph, Map<Integer,Set<Integer>> comms, boolean partitionIsFromFile){
     	this(); 
     	g = graph;
     	T = graph.GetTriangles();   
@@ -116,7 +141,7 @@ public class SCDWithLevelsGraphMetaData {
         		}
         	}
         }
-    }
+    }*/
     
 	public SCDWithLevelsGraphMetaData(SCDWithLevelsGraphMetaData ORIGINALmetaData) {
     	g=ORIGINALmetaData.g;
@@ -129,8 +154,7 @@ public class SCDWithLevelsGraphMetaData {
 	}
 
 	public void ClearCommsOfNode(Integer node){
-    	Set<Integer> commsSet = node2coms.get(node); 
-    	
+    	Set<Integer> commsSet = node2coms.get(node);
     	//update intersection ratio
     	UpdateIntersectionRatioRemove(commsSet);   
     	
@@ -158,6 +182,7 @@ public class SCDWithLevelsGraphMetaData {
         		
         		Integer min = Math.min(x, y);
         		Integer max = Math.max(x, y);
+        		
         		Intersection_c1_c2.get(min).put(max, Intersection_c1_c2.get(min).get(max)-1);
         	}
         }		

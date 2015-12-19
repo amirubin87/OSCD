@@ -54,7 +54,7 @@ public class OSCDWithlevels {
 		this.OriginalG = new UndirectedGraph(Paths.get(pathToGraph));		
 		
 		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(OriginalG);		
-		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart);
+		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart,false);
 	}
 	
 	public OSCDWithlevels(String pathToGraph, String pathToPartition, double[]betas, double alpha, String outputPath, int iteratioNumToStartMerge, int maxIterationsToRun, int percentageOfStableNodes) throws IOException{
@@ -69,7 +69,7 @@ public class OSCDWithlevels {
 		this.OriginalG = new UndirectedGraph(Paths.get(pathToGraph));
 		
 		Map<Integer, Set<Integer>> firstPart = GetPartitionFromFile(pathToPartition);		
-		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart);
+		this.OriginalMetaData = new SCDWithLevelsGraphMetaData(OriginalG,firstPart, false);
 	}
 	
 	
@@ -102,6 +102,9 @@ public class OSCDWithlevels {
 				AddToDendogram(level,levelComms);
 				// output level				
 				WriteToFile(Dendogram.get(level), betta, level);
+				if(nonEmpty <2){
+					break;
+				}
 				//Create next level graph and meta data
 				CreateNextLevel();
 				level++;
@@ -235,7 +238,7 @@ public class OSCDWithlevels {
 	private void WriteToFile(Map<Integer, Set<Integer>> comms, double betta, int level) throws FileNotFoundException, UnsupportedEncodingException {
 		PrintWriter writer = new PrintWriter(outputPath + betta + "-L-"+ level + ".txt", "UTF-8");
 		for ( Set<Integer> listOfNodes : comms.values()){
-			if(listOfNodes.size()>0){
+			if(listOfNodes.size()>2){
 				for(int node : listOfNodes){
 					writer.print(node + " ");
 				}
@@ -271,6 +274,65 @@ public class OSCDWithlevels {
 	        }
 	    }
 	    
+	    return result;
+	}
+	
+	public static Map<Integer,Set<Integer>> GetFirstPartitionCliques(UndirectedGraph G){
+		Set<Integer> hasComm = new HashSet<>();
+		boolean vHasComm=false;
+		Map<Integer,Set<Integer>> result = new HashMap<>();
+			    
+	    int commID=0;
+	    Set<Integer> nodes = G.GetNodes();
+	    for (int v :nodes){
+	    	if(hasComm.contains(v)){
+	    		continue;
+	    	}
+	    	vHasComm = false;
+	    	Set<Integer> vNeigh = G.neighbors(v);
+	    	for(int u:vNeigh){
+	    		if(vHasComm){
+	    			break;
+	    		}
+	    		if(!hasComm.contains(u)){
+	    			Set<Integer> UVNeigh= Utills.Intersection(vNeigh, G.neighbors(u));
+	    			for(int w:UVNeigh){
+	    				if(vHasComm){
+	    	    			break;
+	    	    		}
+	    				if(!hasComm.contains(w)){	
+	    					for(int z : Utills.Intersection(UVNeigh, G.neighbors(w))){
+	    						if(vHasComm){
+	    			    			break;
+	    			    		}
+	    						if(!hasComm.contains(z)){	    					
+			    					Set<Integer> comm = new HashSet<>();
+			    					comm.add(v);
+			    					comm.add(u);
+			    					comm.add(w);
+			    					comm.add(z);
+			    					result.put(commID, comm);
+			    					commID+=1;
+			    					hasComm.add(v);
+			    					hasComm.add(u);
+			    					hasComm.add(w);
+			    					hasComm.add(z);
+			    					vHasComm = true;
+			    					break;
+			    				}	    						
+	    					}
+	    				}
+	    			}
+	    		}
+	    	}
+	    	if(!vHasComm){
+	    		Set<Integer> comm = new HashSet<>();
+				comm.add(v);
+	    		result.put(commID, comm);
+	    		commID+=1;
+	    		hasComm.add(v);
+	    	}
+	    }
 	    return result;
 	}
 	
@@ -363,11 +425,9 @@ public class OSCDWithlevels {
 	}
 	
 	private void CreateNextLevel(){
-		
-
 		UndirectedGraph nextLevelGraph = new UndirectedGraph();
 		for(Entry<Integer, Set<Integer>> comIdNodes: metaData.com2nodes.entrySet()){
-			if(comIdNodes.getValue().size()==0){
+			if(comIdNodes.getValue().size()<3){
 				continue;
 			}
 			int commId = comIdNodes.getKey();
@@ -379,8 +439,8 @@ public class OSCDWithlevels {
 		nextLevelGraph.CalcGraphMetrics();
 
 		LevelsGraphs.add(nextLevelGraph);		
-		Map<Integer, Set<Integer>> firstPart = GetFirstPartition(nextLevelGraph);	
-		SCDWithLevelsGraphMetaData nextLevelMetaData = new SCDWithLevelsGraphMetaData(nextLevelGraph, firstPart);
+		Map<Integer, Set<Integer>> firstPart = GetFirstPartitionCliques(nextLevelGraph);	
+		SCDWithLevelsGraphMetaData nextLevelMetaData = new SCDWithLevelsGraphMetaData(nextLevelGraph, firstPart,true);
 		LevelsMetaData.add(nextLevelMetaData);				
 	}
 
@@ -391,12 +451,14 @@ public class OSCDWithlevels {
 		Set<Integer> neighbors ;		
 		Set<Integer> neighborComms ;
 		for (int node :nodesInComm){
+			double numOfCommsNodeIsIn = metaData.node2coms.get(node).size(); 
 			neighbors = g.neighbors(node);
 			for( int neighbor :neighbors){
 				neighborComms = metaData.node2coms.get(neighbor);
+				double numOfCommsNeighborIsIn = neighborComms.size(); 
 				for(Integer neighborComm : neighborComms){
-					if(neighborComm < commId){
-						double w = g.EdgeWeight(node, neighbor);
+					if(neighborComm < commId && metaData.com2nodes.get(neighborComm).size()>2){
+						double w = g.EdgeWeight(node, neighbor)/(numOfCommsNodeIsIn*numOfCommsNeighborIsIn);
 						Double weightUntilNow =ans.get(neighborComm);
 						if( weightUntilNow == null){
 							ans.put(neighborComm, w);
