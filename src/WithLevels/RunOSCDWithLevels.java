@@ -13,8 +13,8 @@ public class RunOSCDWithLevels {
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
-			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/com-amazon.ungraph.txt";
-			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDLevelsClique/t";
+			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/y/com-amazon.ungraph.txt";
+			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDLevelsClique/delete";
 			//String pathToGraph = "C:/Temp/network.txt";
 			//String outputPath = "C:/Temp/SCDClique/";
 			

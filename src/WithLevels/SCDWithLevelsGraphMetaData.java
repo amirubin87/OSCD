@@ -53,14 +53,27 @@ public class SCDWithLevelsGraphMetaData {
     	T = graph.GetTriangles();   
     	VT = graph.GetVTriangles(); 
     	VTWeight = graph.GetVTrianglesWeights();
+    	int numOfComms = comms.size();
+		int tenPercent = numOfComms/10+1;
+		int commCounter = 0;
+	    System.out.println();
+	    System.out.println();
+		System.out.print("Preparing metadata. Progress: ");
         for (Entry<Integer, Set<Integer>> comm :comms.entrySet()){
+        	commCounter++;
+			if ((commCounter%tenPercent) == 0){
+        		System.out.print(commCounter/tenPercent*10 + "%  ");
+        	}
+			
         	int commID =comm.getKey();
 		
         	Set<Integer> neighbourComms = new HashSet<>();
         	Set<Integer> nodes =comm.getValue();        
             com2nodes.put(commID,nodes);
-            Intersection_c1_c2.put(commID,new HashMap<>());            
+            Intersection_c1_c2.put(commID,new HashMap<>()); 
+            
             for (int node : nodes){
+	            	
             		Set<Integer> commsOfNode = node2coms.get(node);            		
             		if(commsOfNode == null){
             			commsOfNode = new HashSet<>();

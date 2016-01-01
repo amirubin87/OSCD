@@ -150,13 +150,23 @@ public class OSCDWithlevels {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.GetNumberOfNodes();
+	    int tenPercent = n/10+1;
 	    int numOfStableNodesToReach = n*percentageOfStableNodes/100;
+	    System.out.println();
+	    System.out.println();
 	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){	    	
+	    	System.out.println();
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);
-	    	System.out.println(numOfStableNodes);
+	    	System.out.println("Amount Of Stable Nodes: " + numOfStableNodes);
+	    	System.out.print("progress in current iteration: ");
 	    	numOfStableNodes=0;
 	        amountOfScans++;
+	        int nodeCounter= 0;
 	        for (Integer node : g.GetNodes()){
+	        	nodeCounter++;	        	
+	        	if ((nodeCounter%tenPercent) == 0){
+	        		System.out.print(nodeCounter/tenPercent*10 + "%  ");
+	        	}
 	            Set<Integer> c_v_original = metaData.node2coms.get(node);	            
 	            metaData.ClearCommsOfNode(node);
 	            Map<Integer, Double> comms_inc = new HashMap<Integer, Double>();
@@ -254,8 +264,17 @@ public class OSCDWithlevels {
 	    Map<Integer, Double> sorted_CC = MapUtil.sortByValue(CC);
 	    double maxSeenSoFar=1.0;    
 	    boolean[] isVisited = new boolean[G.GetMaxNodeId()+1];	    
-	    int commID=0;	    
+	    int commID=0;
+	    int numOfNodes = sorted_CC.size();
+		int tenPercent = numOfNodes/10+1;
+		int nodeCounter = 0;
+	    System.out.println();
+		System.out.print("Finding first partitioning. Progress: ");
 	    for (int v : sorted_CC.keySet()){
+	    	nodeCounter++;
+			if ((nodeCounter%tenPercent) == 0){
+        		System.out.print(nodeCounter/tenPercent*10 + "%  ");
+        	}
 	    	if(maxSeenSoFar<CC.get(v)){
 	    		throw(new RuntimeException(String.format("sortedCC was not sorted. node: %1$d.", v)));
 	    	}	    	

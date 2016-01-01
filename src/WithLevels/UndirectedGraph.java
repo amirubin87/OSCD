@@ -45,7 +45,17 @@ public class UndirectedGraph {
 		int v,u,max,min;
 		double weight;
 		Set<Integer> vNeig, uNeig;
+		int numOfLines = lines.size();
+		int tenPercent = numOfLines/10+1;
+		int lineNumber = 0; 
+		System.out.println();
+		System.out.print("Reading edges. Progress: ");
 		for (String line : lines){
+			lineNumber++;
+			if ((lineNumber%tenPercent) == 0){
+        		System.out.print(lineNumber/tenPercent*10 + "%  ");
+        	}
+			
 			String[] parts = line.split(" |\t");
 			v = Integer.parseInt(parts[0].trim());
 			u = Integer.parseInt(parts[1].trim());
@@ -155,8 +165,17 @@ public class UndirectedGraph {
     		VT.put(v,new HashSet<>());
     	}
     	
-    	Set<Integer> vTriangle, uTriangle, wTriangle;    	
+    	Set<Integer> vTriangle, uTriangle, wTriangle; 
+    	int numOfNodes = nodes.size();
+		int tenPercent = numOfNodes/10+1;
+		int nodeCounter = 0;
+	    System.out.println();
+		System.out.print("Processing graph. Progress: ");
     	for(int v : nodes){
+    		nodeCounter++;
+			if ((nodeCounter%tenPercent) == 0){
+        		System.out.print(nodeCounter/tenPercent*10 + "%  ");
+        	}
     		Set<Integer> vNeighbors = neighbors(v);
     		vTriangle = VT.get(v);
     		for( int u : vNeighbors){
