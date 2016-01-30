@@ -67,17 +67,17 @@ public class OSCD {
 		}
 	}
 	
-	private Map<Integer,Set<Integer>> FindCommunities(double betta) {
+	private Map<Integer,Set<Integer>> FindCommunities(double betta) throws FileNotFoundException, UnsupportedEncodingException {
 	    int numOfStableNodes = 0;
 	    int amountOfScans = 0;
 	    int n = g.number_of_nodes();
 	    int numOfStableNodesToReach = n*percentageOfStableNodes/100;
-	    while (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun){	    	
+	    while (amountOfScans <5 || (numOfStableNodes < numOfStableNodesToReach && amountOfScans < maxIterationsToRun)){	    	
 	    	System.out.println("Input: " +pathToGraph + " betta: " + betta + "            Num of iter: " + amountOfScans);
 	    	System.out.println(numOfStableNodes);
 	    	numOfStableNodes=0;
 	    	amountOfScans++;
-	        for (Integer node : g.nodes()){
+	    	for (Integer node : g.nodes()){
 	            Set<Integer> c_v_original = metaData.node2coms.get(node);	            
 	            metaData.ClearCommsOfNode(node);
 	            Map<Integer, Double> comms_inc = new HashMap<Integer, Double>();
@@ -103,9 +103,24 @@ public class OSCD {
 	    if (amountOfScans >= maxIterationsToRun){
 	        System.out.println(String.format("NOTICE - THE ALGORITHM HASNT STABLED. IT STOPPED AFTER SCANNING ALL NODES FOR %1$d TIMES.",maxIterationsToRun));
 	    }
+	    WriteNode2Comm(metaData.node2coms, betta);
 	    return metaData.com2nodes;
 	}	  
 	
+	private void WriteNode2Comm(Map<Integer, Set<Integer>> node2coms, double betta) throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(outputPath + betta + "node2Comm.txt", "UTF-8");
+		PrintWriter writer1 = new PrintWriter(outputPath + betta + "node2Comm1.clu", "UTF-8");
+		writer1.println("*Vertices " + node2coms.size()); 
+		for ( Integer node: node2coms.keySet()){
+				writer.print(node + " " + node2coms.get(node).toArray()[0]);
+				writer.println("");	
+				writer1.println(node2coms.get(node).toArray()[0]);						
+		}		
+		writer.close();
+		writer1.close();	
+		
+	}
+
 	private boolean FindAndMergeComms (Map<Integer[],Double> commsCouplesIntersectionRatio){
 	    boolean haveMergedComms = false;
 	    //Set<Integer> commsToClean = new HashSet<Integer>();
@@ -141,7 +156,7 @@ public class OSCD {
 	    }
 	    Set<Integer> bestComs = new HashSet<Integer>();
 	    for(Entry<Integer, Double> entry: comms_imps.entrySet()){
-	    		 if (entry.getValue()*betta > bestImp){
+	    		 if (entry.getValue()*betta >= bestImp){
 	    				 bestComs.add(entry.getKey());
 	    		 }
 	    }

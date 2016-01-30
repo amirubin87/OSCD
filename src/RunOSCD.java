@@ -7,9 +7,9 @@ public class RunOSCD {
 			System.out.println("pathToGraph  outputPath  betas  alpha=0.8  iteratioNumToStartMerge=100  maxIterationsToRun=20 percentageOfStableNodes=95");
 		}
 		else{
-			String pathToGraph = "C:/Users/t-amirub/Desktop/amazon/SLIM-com-amazon.ungraph.txt";
-			String outputPath = "C:/Users/t-amirub/Desktop/amazon/SCDNoLevels/SLIM-";
-			double[] betas = {1.1,1.2,1.3,1.4,1.5,2.0,2.5,3.0,3.5,4.0,4.5};
+			String pathToGraph = "C:/Users/t-amirub/Desktop/net/Les Miserables/net.txt";
+			String outputPath = "C:/Users/t-amirub/Desktop/net/Les Miserables/OSCD/";
+			double[] betas = {1.0000001};
 			
 			double alpha = 0.8;
 			int iteratioNumToStartMerge = 6;
